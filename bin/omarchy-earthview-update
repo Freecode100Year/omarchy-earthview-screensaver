@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Fetch a random high-resolution Google Earth View image and set it for Hyprlock.
+
+set -euo pipefail
+
+CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy/earthview"
+JSON_URL="https://raw.githubusercontent.com/limhenry/earthview/master/earthview.json"
+MAX_CACHED=20
+
+mkdir -p "$CACHE_DIR"
+
+# Fetch random Earth View image URL
+IMG_URL=$(curl -fsSL --connect-timeout 10 "$JSON_URL"     | grep -oE 'https://www\.gstatic\.com/prettyearth/assets/full/[0-9]+\.jpg'     | shuf -n 1 || true)
+
+if [[ -n "$IMG_URL" ]]; then
+    FILENAME=$(basename "$IMG_URL")
+    TMP_FILE="$CACHE_DIR/$FILENAME.tmp"
+    TARGET_FILE="$CACHE_DIR/$FILENAME"
+
+    if curl -fsSL --connect-timeout 15 "$IMG_URL" -o "$TMP_FILE"; then
+        mv "$TMP_FILE" "$TARGET_FILE"
+        cp "$TARGET_FILE" "$CACHE_DIR/current.jpg"
+
+        # Prune older cached wallpapers to save disk space
+        ls -t "$CACHE_DIR"/[0-9]*.jpg 2>/dev/null | tail -n +$((MAX_CACHED + 1)) | xargs -r rm -f --
+        exit 0
+    else
+        rm -f "$TMP_FILE"
+    fi
+fi
+
+# Offline fallback: pick a random image from local cache
+LOCAL_IMG=$(ls "$CACHE_DIR"/[0-9]*.jpg 2>/dev/null | shuf -n 1 || true)
+if [[ -n "$LOCAL_IMG" ]]; then
+    cp "$LOCAL_IMG" "$CACHE_DIR/current.jpg"
+fi

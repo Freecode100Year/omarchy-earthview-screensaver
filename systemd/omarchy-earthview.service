@@ -1,0 +1,8 @@
+[Unit]
+Description=Fetch random Google Earth View wallpaper for Omarchy Hyprlock
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/omarchy-earthview-update
