@@ -78,6 +78,22 @@ systemctl --user daemon-reload
 systemctl --user restart omarchy-earthview.timer
 ```
 
+## Verify installation
+
+Confirm that an image was downloaded and the background refresh timer is active:
+
+```bash
+test -s "${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/current.jpg" && echo "Earth View image is present"
+systemctl --user is-active omarchy-earthview.timer
+systemctl --user list-timers omarchy-earthview.timer
+```
+
+The first command should print `Earth View image is present`, and the second should print `active`. Finally, run Hyprlock to check that it displays the image:
+
+```bash
+hyprlock
+```
+
 ## Uninstall
 
 Run the uninstaller from the project directory:
