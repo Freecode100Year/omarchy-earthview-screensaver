@@ -50,6 +50,13 @@ Lock the screen to see the background:
 hyprlock
 ```
 
+If the shell reports `hyprlock: command not found`, install Hyprlock from the Arch Linux Extra repository, then run it again:
+
+```bash
+sudo pacman -S hyprlock
+hyprlock
+```
+
 If `~/.config/hypr/hyprlock.conf` does not exist, create a minimal config for this background and test it with:
 
 ```bash
