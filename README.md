@@ -50,6 +50,20 @@ Lock the screen to see the background:
 hyprlock
 ```
 
+If `~/.config/hypr/hyprlock.conf` does not exist, create a minimal config for this background and test it with:
+
+```bash
+mkdir -p ~/.config/hypr
+cat > ~/.config/hypr/hyprlock.conf <<EOF
+background {
+    monitor =
+    path = $HOME/.local/share/omarchy-earthview/current.jpg
+    blur_passes = 0
+}
+EOF
+hyprlock
+```
+
 To change the refresh interval, edit `~/.config/systemd/user/omarchy-earthview.timer`, then reload the user units and restart the timer:
 
 ```bash
