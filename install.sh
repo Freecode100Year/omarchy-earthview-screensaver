@@ -11,7 +11,7 @@ fi
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
-CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy/earthview"
+CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview"
 HYPRLOCK_CONF="$HOME/.config/hypr/hyprlock.conf"
 
 echo "==> Installing omarchy-earthview-screensaver..."

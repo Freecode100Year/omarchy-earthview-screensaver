@@ -25,7 +25,7 @@ cd omarchy-earthview-screensaver
 ./install.sh
 ```
 
-The installer places the updater in `~/.local/bin`, installs and enables the user timer, attempts an initial image download, and configures the Hyprlock background. If the config has no existing `path =` setting, add the snippet in [`config/hyprlock.snippet.conf`](config/hyprlock.snippet.conf) manually. The image is stored at `~/.local/share/omarchy/earthview/current.jpg` (or under `$XDG_DATA_HOME` when set).
+The installer places the updater in `~/.local/bin`, installs and enables the user timer, attempts an initial image download, and configures the Hyprlock background. If the config has no existing `path =` setting, add the snippet in [`config/hyprlock.snippet.conf`](config/hyprlock.snippet.conf) manually. The image is stored at `~/.local/share/omarchy-earthview/current.jpg` (or under `$XDG_DATA_HOME` when set). This separate directory avoids Omarchy's `~/.local/share/omarchy` symlink to the system-owned `/usr/share/omarchy` directory.
 
 If `~/.config/hypr/hyprlock.conf` does not exist, the installer leaves Hyprlock configuration to you. When the file is a symlink, installation replaces the symlink with a standalone copy before making changes. Review the timestamped `.bak.*` file if you need to restore the previous configuration.
 
@@ -74,7 +74,7 @@ If installation reports `Permission denied` while creating the Earth View cache,
 ```bash
 id
 printf 'HOME=%s\n' "$HOME"
-namei -l "$HOME/.local/share/omarchy/earthview"
+namei -l "$HOME/.local/share/omarchy-earthview"
 ```
 
 If cloning reports that `omarchy-earthview-screensaver` already exists, the clone did not run. Check the existing checkout and its version before installing:
