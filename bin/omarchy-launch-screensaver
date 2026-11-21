@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# User-level replacement for Omarchy's idle screensaver command.
+
+set -euo pipefail
+
+if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+    echo "Error: run the Earth View screensaver as your logged-in Omarchy user, without sudo." >&2
+    exit 1
+fi
+
+CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview"
+SHELL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/screensaver"
+
+if ! command -v quickshell >/dev/null 2>&1; then
+    echo "Error: quickshell is required to show the Omarchy Earth View screensaver." >&2
+    exit 1
+fi
+
+if [[ ! -s "$CACHE_DIR/current.jpg" ]]; then
+    "$HOME/.local/bin/omarchy-earthview-update"
+fi
+
+# Omarchy stops its stock screensaver by matching this argv marker before the
+# secure lock starts. Keep the same marker so idle dismissal and lock cleanup
+# also stop this user-level replacement.
+exec -a /usr/lib/omarchy-screensaver/omarchy-screensaver quickshell --no-color -p "$SHELL_DIR"

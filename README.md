@@ -1,134 +1,88 @@
 # Omarchy Earth View Screensaver
 
-Refresh your Hyprlock background with satellite imagery from Google Earth View. This small Bash utility runs on Omarchy (Arch Linux with Hyprland and Hyprlock), keeps a local image cache, and updates it in the background with a systemd user timer.
+Replace Omarchy's idle ASCII screensaver with a full-screen Google Earth View photo. The image updates in the background every 30 minutes. Keyboard or mouse activity dismisses the photo, and Omarchy's existing lock timer continues to work.
 
 ## Features
 
-- Downloads a randomly selected image indexed by [limhenry/earthview](https://github.com/limhenry/earthview).
-- Updates the background at boot and every 30 minutes through a systemd user timer.
-- Keeps up to 20 downloaded images and uses a cached image when a refresh cannot download a new one.
-- Installs a Hyprlock background path and creates a timestamped backup of the existing configuration before editing it.
+- Shows the current Earth View image full-screen on each display using Omarchy's bundled Quickshell.
+- Starts through Omarchy's normal idle screensaver command, including its on-demand screensaver menu.
+- Closes on keyboard, mouse movement, click, or scroll, and is stopped before Omarchy locks the session.
+- Downloads a new image every 30 minutes and keeps up to 20 cached images for offline use.
+- Uses a user-level command override and does not replace Omarchy's system-managed screensaver files.
 
 ## Requirements
 
-- Omarchy or a compatible Arch Linux setup
-- Bash, `curl`, `tar`, `grep`, `shuf`, `systemd` user services, and Hyprlock
-- A Hyprlock configuration at `~/.config/hypr/hyprlock.conf` for automatic configuration
-
-Run installation and removal from your normal logged-in Omarchy user account, without `sudo` or a root shell. The timer is a user service and requires that user's session bus.
+- Omarchy Linux with its bundled Quickshell and idle service
+- Bash, `curl`, `tar`, `grep`, `shuf`, and systemd user services
 
 ## Install
+
+Run this from your normal logged-in Omarchy user account, without `sudo` or a root shell:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Freecode100Year/omarchy-earthview-screensaver/main/install.sh | bash
 ```
 
-The one-line command downloads the current `main` branch archive and runs the full installer from a temporary directory. To keep a local checkout instead, clone the repository and run `./install.sh` from it.
+The installer downloads the project to a temporary directory, installs the image updater and Quickshell screensaver, enables the 30-minute user timer, and places the user command before Omarchy's system command in Bash login shells. It does not edit the system package files. Start a new terminal or session after installation if Omarchy's idle service does not pick up the command override immediately.
 
-The installer places the updater in `~/.local/bin`, installs and enables the user timer, attempts an initial image download, and configures the Hyprlock background. If the config has no existing `path =` setting, add the snippet in [`config/hyprlock.snippet.conf`](config/hyprlock.snippet.conf) manually. The image is stored at `~/.local/share/omarchy-earthview/current.jpg` (or under `$XDG_DATA_HOME` when set). This separate directory avoids Omarchy's `~/.local/share/omarchy` symlink to the system-owned `/usr/share/omarchy` directory.
+## Test
 
-If `~/.config/hypr/hyprlock.conf` does not exist, the installer leaves Hyprlock configuration to you. When the file is a symlink, installation replaces the symlink with a standalone copy before making changes. Review the timestamped `.bak.*` file if you need to restore the previous configuration.
-
-## Use
-
-Refresh the image immediately:
+Check that the shell resolves the user override and the image cache exists:
 
 ```bash
-omarchy-earthview-update
+command -v omarchy-launch-screensaver
+test -s "${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/current.jpg" && echo "Earth View image is present"
+systemctl --user is-active omarchy-earthview.timer
+systemctl --user list-timers omarchy-earthview.timer
 ```
 
-Check or run the timer:
+`command -v` should point to `~/.local/bin/omarchy-launch-screensaver`, the image check should print `Earth View image is present`, and the timer status should be `active`.
+
+Launch the replacement manually:
 
 ```bash
-systemctl --user status omarchy-earthview.timer
-systemctl --user start omarchy-earthview.service
+omarchy-launch-screensaver force
 ```
 
-Lock the screen to see the background:
+Move the mouse or press a key to dismiss it. To check the idle flow, run `omarchy toggle screensaver` to disable the idle screen saver and run it again to re-enable it; Omarchy's configured lock timer is unchanged.
 
-```bash
-hyprlock
-```
+## Update interval
 
-If the shell reports `hyprlock: command not found`, install Hyprlock from the Arch Linux Extra repository, then run it again:
-
-```bash
-sudo pacman -S hyprlock
-hyprlock
-```
-
-If `~/.config/hypr/hyprlock.conf` does not exist, create a minimal config for this background and test it with:
-
-```bash
-mkdir -p ~/.config/hypr
-cat > ~/.config/hypr/hyprlock.conf <<EOF
-background {
-    monitor =
-    path = $HOME/.local/share/omarchy-earthview/current.jpg
-    blur_passes = 0
-}
-EOF
-hyprlock
-```
-
-To change the refresh interval, edit `~/.config/systemd/user/omarchy-earthview.timer`, then reload the user units and restart the timer:
+Edit `~/.config/systemd/user/omarchy-earthview.timer`, then reload and restart the timer:
 
 ```bash
 systemctl --user daemon-reload
 systemctl --user restart omarchy-earthview.timer
 ```
 
-## Verify installation
-
-Confirm that an image was downloaded and the background refresh timer is active:
-
-```bash
-test -s "${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/current.jpg" && echo "Earth View image is present"
-systemctl --user is-active omarchy-earthview.timer
-systemctl --user list-timers omarchy-earthview.timer
-```
-
-The first command should print `Earth View image is present`, and the second should print `active`. Finally, run Hyprlock to check that it displays the image:
-
-```bash
-hyprlock
-```
-
 ## Uninstall
 
-Run the uninstaller from the project directory:
+From the project checkout, run:
 
 ```bash
 ./uninstall.sh
 ```
 
-It disables and removes the timer and service, removes the updater, and asks whether to delete the cached images. Restore your Hyprlock configuration from the backup manually if desired.
+The uninstaller disables and removes the user timer and service, removes the command override and its Bash login PATH block, and asks whether to remove the cached Earth View images. Omarchy's original system screensaver remains installed.
 
 ## Troubleshooting
 
-If installation reports `Permission denied` while creating the Earth View cache, inspect the current user and each directory in the cache path:
+If Omarchy still starts its stock ASCII screensaver, confirm command resolution:
 
 ```bash
-id
-printf 'HOME=%s\n' "$HOME"
-namei -l "$HOME/.local/share/omarchy-earthview"
+command -v omarchy-launch-screensaver
+bash -lc 'command -v omarchy-launch-screensaver'
 ```
 
-If cloning reports that `omarchy-earthview-screensaver` already exists, the clone did not run. Check the existing checkout and its version before installing:
+Both should resolve to `~/.local/bin/omarchy-launch-screensaver`. If the second command does not, start a new login session and check that the installer added its PATH block to `~/.bash_profile`, `~/.bash_login`, or `~/.profile`.
+
+If the screen is black, check that the current image exists and that Quickshell can load the app:
 
 ```bash
-git -C "$HOME/omarchy-earthview-screensaver" status --short --branch
-git -C "$HOME/omarchy-earthview-screensaver" log -1 --oneline
+test -s "${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/current.jpg"
+quickshell --no-color -p "${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/screensaver"
 ```
 
-Run these commands and the installer as your normal logged-in Omarchy user, without `sudo`. Use `&&` between setup commands so later steps stop if cloning or changing directories fails:
+## Credits and license
 
-```bash
-git clone https://github.com/Freecode100Year/omarchy-earthview-screensaver.git && \
-cd omarchy-earthview-screensaver && \
-./install.sh
-```
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+Earth View image URLs are indexed by [limhenry/earthview](https://github.com/limhenry/earthview). This project is licensed under the MIT License; see [LICENSE](LICENSE).

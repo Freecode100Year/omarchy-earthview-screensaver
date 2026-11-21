@@ -23,14 +23,21 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview"
-HYPRLOCK_CONF="$HOME/.config/hypr/hyprlock.conf"
+APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/screensaver"
+
+if ! command -v quickshell >/dev/null 2>&1; then
+    echo "Error: this Omarchy screensaver replacement requires quickshell." >&2
+    exit 1
+fi
 
 echo "==> Installing omarchy-earthview-screensaver..."
 
-mkdir -p "$BIN_DIR" "$SYSTEMD_DIR" "$CACHE_DIR"
+mkdir -p "$BIN_DIR" "$SYSTEMD_DIR" "$CACHE_DIR" "$APP_DIR"
 
-# Install binary
+# Install updater, Omarchy screensaver override, and its Quickshell UI.
 install -m 755 "$REPO_DIR/bin/omarchy-earthview-update" "$BIN_DIR/omarchy-earthview-update"
+install -m 755 "$REPO_DIR/bin/omarchy-launch-screensaver" "$BIN_DIR/omarchy-launch-screensaver"
+install -m 644 "$REPO_DIR/screensaver/shell.qml" "$APP_DIR/shell.qml"
 
 # Install systemd user units
 install -m 644 "$REPO_DIR/systemd/omarchy-earthview.service" "$SYSTEMD_DIR/omarchy-earthview.service"
@@ -44,26 +51,29 @@ echo "==> Fetching initial Google Earth View image..."
 systemctl --user daemon-reload
 systemctl --user enable --now omarchy-earthview.timer
 
-# Configure Hyprlock
-if [[ -f "$HYPRLOCK_CONF" ]]; then
-    if [[ -L "$HYPRLOCK_CONF" ]]; then
-        cp --remove-destination "$(readlink -f "$HYPRLOCK_CONF")" "$HYPRLOCK_CONF"
-        echo "==> Converted symlinked hyprlock.conf to a standalone user config."
+# Omarchy starts this command from a login Bash shell on idle. Put the
+# per-user override ahead of /usr/share/omarchy/bin without editing system files.
+PROFILE="$HOME/.bash_profile"
+if [[ ! -e "$PROFILE" && ! -L "$PROFILE" ]]; then
+    if [[ -e "$HOME/.bash_login" || -L "$HOME/.bash_login" ]]; then
+        PROFILE="$HOME/.bash_login"
+    elif [[ -e "$HOME/.profile" || -L "$HOME/.profile" ]]; then
+        PROFILE="$HOME/.profile"
     fi
+fi
+if [[ -L "$PROFILE" ]]; then
+    PROFILE="$(readlink -f "$PROFILE")"
+fi
+touch "$PROFILE"
+if ! grep -qF '# >>> omarchy-earthview-screensaver PATH >>>' "$PROFILE"; then
+    cat >>"$PROFILE" <<'EOF'
 
-    BACKUP_FILE="${HYPRLOCK_CONF}.bak.$(date +%Y%m%d%H%M%S)"
-    cp "$HYPRLOCK_CONF" "$BACKUP_FILE"
-    echo "==> Backed up existing hyprlock.conf to $BACKUP_FILE"
-
-    if grep -qE '^[[:space:]]*path[[:space:]]*=' "$HYPRLOCK_CONF"; then
-        sed -i "s|^[[:space:]]*path[[:space:]]*=.*|    path = $CACHE_DIR/current.jpg|g" "$HYPRLOCK_CONF"
-        sed -i "s|^[[:space:]]*blur_passes[[:space:]]*=.*|    blur_passes = 0|g" "$HYPRLOCK_CONF"
-        echo "==> Updated $HYPRLOCK_CONF with Earth View background."
-    else
-        echo "==> Note: Could not find 'path =' in $HYPRLOCK_CONF. Please merge config/hyprlock.snippet.conf manually."
-    fi
-else
-    echo "==> Note: $HYPRLOCK_CONF not found. Please configure your lockscreen to use $CACHE_DIR/current.jpg."
+# >>> omarchy-earthview-screensaver PATH >>>
+export PATH="$HOME/.local/bin:$PATH"
+# <<< omarchy-earthview-screensaver PATH <<<
+EOF
 fi
 
-echo "==> Installation complete! Run 'hyprlock' to test your new screensaver."
+echo "==> Omarchy idle screensaver now uses Earth View images."
+echo "==> Test it with: omarchy-launch-screensaver force"
+echo "==> Installation complete."
