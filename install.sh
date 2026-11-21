@@ -3,6 +3,11 @@
 
 set -euo pipefail
 
+if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+    echo "Error: run this installer as your logged-in Omarchy user, without sudo. It installs a systemd user timer and needs that user's session bus." >&2
+    exit 1
+fi
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 SYSTEMD_DIR="$HOME/.config/systemd/user"

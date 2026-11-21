@@ -15,6 +15,8 @@ Refresh your Hyprlock background with satellite imagery from Google Earth View. 
 - Bash, `curl`, `grep`, `shuf`, `systemd` user services, and Hyprlock
 - A Hyprlock configuration at `~/.config/hypr/hyprlock.conf` for automatic configuration
 
+Run installation and removal from your normal logged-in Omarchy user account, without `sudo` or a root shell. The timer is a user service and requires that user's session bus.
+
 ## Install
 
 ```bash

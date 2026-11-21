@@ -3,6 +3,11 @@
 
 set -euo pipefail
 
+if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+    echo "Error: run this uninstaller as the Omarchy user who installed the screensaver, without sudo." >&2
+    exit 1
+fi
+
 BIN_FILE="$HOME/.local/bin/omarchy-earthview-update"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy/earthview"
