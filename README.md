@@ -67,6 +67,31 @@ Run the uninstaller from the project directory:
 
 It disables and removes the timer and service, removes the updater, and asks whether to delete the cached images. Restore your Hyprlock configuration from the backup manually if desired.
 
+## Troubleshooting
+
+If installation reports `Permission denied` while creating the Earth View cache, inspect the current user and each directory in the cache path:
+
+```bash
+id
+printf 'HOME=%s\n' "$HOME"
+namei -l "$HOME/.local/share/omarchy/earthview"
+```
+
+If cloning reports that `omarchy-earthview-screensaver` already exists, the clone did not run. Check the existing checkout and its version before installing:
+
+```bash
+git -C "$HOME/omarchy-earthview-screensaver" status --short --branch
+git -C "$HOME/omarchy-earthview-screensaver" log -1 --oneline
+```
+
+Run these commands and the installer as your normal logged-in Omarchy user, without `sudo`. Use `&&` between setup commands so later steps stop if cloning or changing directories fails:
+
+```bash
+git clone https://github.com/Freecode100Year/omarchy-earthview-screensaver.git && \
+cd omarchy-earthview-screensaver && \
+./install.sh
+```
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE).
