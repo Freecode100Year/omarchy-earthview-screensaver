@@ -12,7 +12,7 @@ Refresh your Hyprlock background with satellite imagery from Google Earth View. 
 ## Requirements
 
 - Omarchy or a compatible Arch Linux setup
-- Bash, `curl`, `grep`, `shuf`, `systemd` user services, and Hyprlock
+- Bash, `curl`, `tar`, `grep`, `shuf`, `systemd` user services, and Hyprlock
 - A Hyprlock configuration at `~/.config/hypr/hyprlock.conf` for automatic configuration
 
 Run installation and removal from your normal logged-in Omarchy user account, without `sudo` or a root shell. The timer is a user service and requires that user's session bus.
@@ -20,10 +20,10 @@ Run installation and removal from your normal logged-in Omarchy user account, wi
 ## Install
 
 ```bash
-git clone https://github.com/Freecode100Year/omarchy-earthview-screensaver.git
-cd omarchy-earthview-screensaver
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/Freecode100Year/omarchy-earthview-screensaver/main/install.sh | bash
 ```
+
+The one-line command downloads the current `main` branch archive and runs the full installer from a temporary directory. To keep a local checkout instead, clone the repository and run `./install.sh` from it.
 
 The installer places the updater in `~/.local/bin`, installs and enables the user timer, attempts an initial image download, and configures the Hyprlock background. If the config has no existing `path =` setting, add the snippet in [`config/hyprlock.snippet.conf`](config/hyprlock.snippet.conf) manually. The image is stored at `~/.local/share/omarchy-earthview/current.jpg` (or under `$XDG_DATA_HOME` when set). This separate directory avoids Omarchy's `~/.local/share/omarchy` symlink to the system-owned `/usr/share/omarchy` directory.
 

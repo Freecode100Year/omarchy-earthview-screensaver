@@ -8,6 +8,17 @@ if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
     exit 1
 fi
 
+if [[ -z "${BASH_SOURCE[0]:-}" || "${BASH_SOURCE[0]}" == "bash" || "${BASH_SOURCE[0]}" == "/dev/stdin" ]]; then
+    BOOTSTRAP_DIR="$(mktemp -d)"
+    trap 'rm -rf "$BOOTSTRAP_DIR"' EXIT
+    ARCHIVE_URL="https://codeload.github.com/Freecode100Year/omarchy-earthview-screensaver/tar.gz/refs/heads/main"
+
+    echo "==> Downloading omarchy-earthview-screensaver..."
+    curl -fsSL "$ARCHIVE_URL" | tar -xz --strip-components=1 -C "$BOOTSTRAP_DIR"
+    bash "$BOOTSTRAP_DIR/install.sh" "$@"
+    exit $?
+fi
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$HOME/.local/bin"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
