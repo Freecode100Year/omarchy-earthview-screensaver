@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+if [[ ${EUID:-$(id -u)} -eq 0 && -z ${EARTHVIEW_ALLOW_ROOT:-} ]]; then
     echo "Error: run this uninstaller as the Omarchy user who installed the screensaver, without sudo." >&2
     exit 1
 fi
@@ -39,10 +39,12 @@ for PROFILE in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do
     fi
 done
 
-read -rp "Remove cached Earth View images at $CACHE_DIR? [y/N]: " ans
+# No terminal to ask (e.g. piped from curl): keep the images.
+ans=""
+read -rp "Remove cached Earth View images at $CACHE_DIR? [y/N]: " ans </dev/tty 2>/dev/null || true
 if [[ "${ans,,}" == "y" ]]; then
     rm -rf "$CACHE_DIR"
     echo "==> Removed image cache."
 fi
 
-echo "==> Uninstalled. Remember to restore your ~/.config/hypr/hyprlock.conf backup if needed."
+echo "==> Uninstalled. Omarchy's own screensaver is back (start a new session if it is not picked up at once)."

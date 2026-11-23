@@ -1,5 +1,5 @@
 [Unit]
-Description=Fetch random Google Earth View wallpaper for Omarchy Hyprlock
+Description=Fetch a random Google Earth View image for the Omarchy screensaver
 After=network-online.target
 Wants=network-online.target
 

@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+if [[ ${EUID:-$(id -u)} -eq 0 && -z ${EARTHVIEW_ALLOW_ROOT:-} ]]; then
     echo "Error: run this installer as your logged-in Omarchy user, without sudo. It installs a systemd user timer and needs that user's session bus." >&2
     exit 1
 fi
@@ -11,10 +11,22 @@ fi
 if [[ -z "${BASH_SOURCE[0]:-}" || "${BASH_SOURCE[0]}" == "bash" || "${BASH_SOURCE[0]}" == "/dev/stdin" ]]; then
     BOOTSTRAP_DIR="$(mktemp -d)"
     trap 'rm -rf "$BOOTSTRAP_DIR"' EXIT
-    ARCHIVE_URL="https://codeload.github.com/Freecode100Year/omarchy-earthview-screensaver/tar.gz/refs/heads/main"
+    # GitHub first, GitLab mirror if GitHub cannot be reached.
+    ARCHIVE_URLS=(
+        "https://codeload.github.com/Freecode100Year/omarchy-earthview-screensaver/tar.gz/refs/heads/main"
+        "https://gitlab.com/sj9292008133/omarchy-earthview-screensaver/-/archive/main/omarchy-earthview-screensaver-main.tar.gz"
+    )
 
     echo "==> Downloading omarchy-earthview-screensaver..."
-    curl -fsSL "$ARCHIVE_URL" | tar -xz --strip-components=1 -C "$BOOTSTRAP_DIR"
+    ok=0
+    for url in "${ARCHIVE_URLS[@]}"; do
+        if curl -fsSL --connect-timeout 15 "$url" -o "$BOOTSTRAP_DIR/src.tar.gz" &&
+            tar -xzf "$BOOTSTRAP_DIR/src.tar.gz" --strip-components=1 -C "$BOOTSTRAP_DIR"; then
+            ok=1
+            break
+        fi
+    done
+    [[ $ok == 1 ]] || { echo "Error: could not download the project from GitHub or GitLab." >&2; exit 1; }
     bash "$BOOTSTRAP_DIR/install.sh" "$@"
     exit $?
 fi

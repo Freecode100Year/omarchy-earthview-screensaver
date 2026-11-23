@@ -7,7 +7,8 @@ Replace Omarchy's idle ASCII screensaver with a full-screen Google Earth View ph
 - Shows the current Earth View image full-screen on each display using Omarchy's bundled Quickshell.
 - Starts through Omarchy's normal idle screensaver command, including its on-demand screensaver menu.
 - Closes on keyboard, mouse movement, click, or scroll, and is stopped before Omarchy locks the session.
-- Downloads a new image every 30 minutes and keeps up to 20 cached images for offline use.
+- Downloads a new image every 30 minutes and keeps up to 20 cached images for offline use. Only real JPEG files are used, so a Wi-Fi login page can't end up on screen.
+- If there is no image yet (first start while offline), Omarchy's own screensaver is shown instead of a black screen.
 - Uses a user-level command override and does not replace Omarchy's system-managed screensaver files.
 
 ## Requirements
@@ -23,7 +24,7 @@ Run this from your normal logged-in Omarchy user account, without `sudo` or a ro
 curl -fsSL https://raw.githubusercontent.com/Freecode100Year/omarchy-earthview-screensaver/main/install.sh | bash
 ```
 
-The installer downloads the project to a temporary directory, installs the image updater and Quickshell screensaver, enables the 30-minute user timer, and places the user command before Omarchy's system command in Bash login shells. It does not edit the system package files. Start a new terminal or session after installation if Omarchy's idle service does not pick up the command override immediately.
+If GitHub can't be reached, the installer downloads from the GitLab mirror (https://gitlab.com/sj9292008133/omarchy-earthview-screensaver). The installer downloads the project to a temporary directory, installs the image updater and Quickshell screensaver, enables the 30-minute user timer, and places the user command before Omarchy's system command in Bash login shells. It does not edit the system package files. Start a new terminal or session after installation if Omarchy's idle service does not pick up the command override immediately.
 
 ## Test
 
@@ -45,6 +46,10 @@ omarchy-launch-screensaver force
 ```
 
 Move the mouse or press a key to dismiss it. To check the idle flow, run `omarchy toggle screensaver` to disable the idle screen saver and run it again to re-enable it; Omarchy's configured lock timer is unchanged.
+
+## Automated tests
+
+`bash tests/test.sh` runs offline in a throwaway home folder (stubbed network and systemd): image download and cache pruning, offline fallback, install, launch and uninstall. GitHub Actions runs it on every push.
 
 ## Update interval
 

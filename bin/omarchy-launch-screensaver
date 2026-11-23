@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+if [[ ${EUID:-$(id -u)} -eq 0 && -z ${EARTHVIEW_ALLOW_ROOT:-} ]]; then
     echo "Error: run the Earth View screensaver as your logged-in Omarchy user, without sudo." >&2
     exit 1
 fi
@@ -11,16 +11,24 @@ fi
 CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview"
 SHELL_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/omarchy-earthview/screensaver"
 
-if ! command -v quickshell >/dev/null 2>&1; then
-    echo "Error: quickshell is required to show the Omarchy Earth View screensaver." >&2
+STOCK=/usr/lib/omarchy-screensaver/omarchy-screensaver
+
+# Without Quickshell or without any image yet (first start while offline), show
+# Omarchy's own screensaver rather than a black screen or nothing.
+stock() {
+    [[ -x $STOCK ]] && exec "$STOCK" "$@"
+    echo "Error: no Earth View image yet and Omarchy's screensaver is missing." >&2
     exit 1
-fi
+}
+
+command -v quickshell >/dev/null 2>&1 || stock "$@"
 
 if [[ ! -s "$CACHE_DIR/current.jpg" ]]; then
-    "$HOME/.local/bin/omarchy-earthview-update"
+    "$HOME/.local/bin/omarchy-earthview-update" || true
 fi
+[[ -s "$CACHE_DIR/current.jpg" && -f "$SHELL_DIR/shell.qml" ]] || stock "$@"
 
 # Omarchy stops its stock screensaver by matching this argv marker before the
 # secure lock starts. Keep the same marker so idle dismissal and lock cleanup
 # also stop this user-level replacement.
-exec -a /usr/lib/omarchy-screensaver/omarchy-screensaver quickshell --no-color -p "$SHELL_DIR"
+exec -a "$STOCK" quickshell --no-color -p "$SHELL_DIR"
